@@ -9,15 +9,15 @@
 <body>
   <header>
     <h1>Revesti+ • MVP</h1>
-    <p>Envie uma foto do ambiente e experimente padrões de revestimento.</p>
+    <p>Tire uma foto do ambiente e experimente padrões de revestimento.</p>
   </header>
 
   <main>
     <section class="controls">
-      <label class="upload">
-        <input type="file" id="photoInput" accept="image/*" />
-        Escolher foto do ambiente
-      </label>
+      <!-- Botão grande: abre a CÂMERA no celular (ou galeria/arquivos no PC) -->
+      <label class="upload" id="shootBtn">Tirar foto agora</label>
+      <!-- Input real fica escondido; o JS clica nele -->
+      <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" />
 
       <div class="patterns">
         <button data-pattern="none">Sem padrão</button>
@@ -28,9 +28,6 @@
         <button data-pattern="concrete">Cimento</button>
       </div>
 
-      <!-- Botão de download visível na página -->
-      <button id="downloadBtn">Baixar Preview</button>
-
       <div class="blends">
         <label>Intensidade
           <input type="range" id="intensity" min="0" max="100" value="65" />
@@ -38,13 +35,16 @@
       </div>
     </section>
 
+    <!-- A foto + efeito é desenhada aqui. O usuário não precisa “ir ao canvas”,
+         ele só vê o resultado como uma imagem. -->
     <section class="canvas-wrap">
       <canvas id="canvas"></canvas>
     </section>
   </main>
 
   <footer>
-    <small>MVP demo • Revesti+</small>
+    <button id="downloadBtn">Baixar Preview</button>
+    <small style="display:block;margin-top:8px;opacity:.7">MVP demo • Revesti+</small>
   </footer>
 
   <script src="script.js"></script>
