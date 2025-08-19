@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Revesti+ (MVP)</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Revesti+ • MVP</h1>
+    <p>Envie uma foto do ambiente e experimente padrões de revestimento.</p>
+  </header>
+
+  <main>
+    <section class="controls">
+      <label class="upload">
+        <input type="file" id="photoInput" accept="image/*" />
+        Escolher foto do ambiente
+      </label>
+
+      <div class="patterns">
+        <button data-pattern="none">Sem padrão</button>
+        <button data-pattern="subway">Subway</button>
+        <button data-pattern="hex">Hexágonos</button>
+      </div>
+
+      <div class="blends">
+        <label>Intensidade
+          <input type="range" id="intensity" min="0" max="100" value="65" />
+        </label>
+      </div>
+    </section>
+
+    <section class="canvas-wrap">
+      <canvas id="canvas"></canvas>
+    </section>
+  </main>
+
+  <footer>
+    <small>MVP demo • Revesti+</small>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
