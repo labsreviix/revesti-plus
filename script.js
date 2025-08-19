@@ -250,5 +250,69 @@ patternButtons.forEach(btn => {
   btn.addEventListener('click', () => {
     currentPattern = btn.dataset.pattern;
     if (currentPattern === 'none') { draw(); return; }
-    patternImg =
+    patternImg = new Image();
+    patternLoaded = false;
+    patternImg.onload = () => { patternLoaded = true; draw(); };
+    patternImg.src = patterns[currentPattern];
+  });
+});
+
+// --------- Seleção de área (polígono) ---------
+function updateSelectionUI() {
+  finishSelectionBtn.style.display = isSelecting ? '' : 'none';
+  clearSelectionBtn.style.display = selectionPoints.length ? '' : 'none';
+  selectionHint.style.display = isSelecting ? '' : 'none';
+}
+
+selectAreaBtn.addEventListener('click', () => {
+  if (!baseLoaded) { alert('Primeiro tire uma foto ou escolha da galeria.'); return; }
+  isSelecting = true;
+  selectionPoints = [];
+  updateSelectionUI();
+  draw();
+});
+
+finishSelectionBtn.addEventListener('click', () => {
+  if (selectionPoints.length < 3) {
+    alert('Marque pelo menos 3 pontos para fechar a área.');
+    return;
+  }
+  isSelecting = false;
+  updateSelectionUI();
+  draw(); // redesenha já com clip ativo
+});
+
+clearSelectionBtn.addEventListener('click', () => {
+  selectionPoints = [];
+  isSelecting = false;
+  updateSelectionUI();
+  draw();
+});
+
+// mouse
+canvas.addEventListener('click', (evt) => {
+  if (!isSelecting) return;
+  const pos = getCanvasPos(evt);
+  selectionPoints.push(pos);
+  draw();
+});
+
+// toque (mobile)
+canvas.addEventListener('touchstart', (evt) => {
+  if (!isSelecting) return;
+  evt.preventDefault();
+  const pos = getCanvasPos(evt);
+  selectionPoints.push(pos);
+  draw();
+}, { passive: false });
+
+// --------- Download ---------
+downloadBtn.addEventListener('click', () => {
+  if (!baseLoaded) return;
+  const a = document.createElement('a');
+  a.href = canvas.toDataURL('image/png');
+  a.download = 'revesti-preview.png';
+  a.click();
+});
+
 
