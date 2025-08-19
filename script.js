@@ -1,27 +1,41 @@
-// === Revesti+ MVP — câmera/galeria + padrões + download ===
+// === Revesti+ MVP — câmera + galeria + padrões + seleção de área (polígono) + download ===
 const fileInput = document.getElementById('photoInput');
 const shootBtn = document.getElementById('shootBtn');
+const openCameraBtn = document.getElementById('openCameraBtn');
+const captureBtn = document.getElementById('captureBtn');
+const video = document.getElementById('video');
+const cameraWrap = document.querySelector('.camera-wrap');
+
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const intensityEl = document.getElementById('intensity');
 const patternButtons = document.querySelectorAll('.patterns button');
 const downloadBtn = document.getElementById('downloadBtn');
 
+const selectAreaBtn = document.getElementById('selectAreaBtn');
+const finishSelectionBtn = document.getElementById('finishSelectionBtn');
+const clearSelectionBtn = document.getElementById('clearSelectionBtn');
+const selectionHint = document.getElementById('selectionHint');
+
 let baseImg = new Image();
 let patternImg = new Image();
 let currentPattern = 'none';
 let baseLoaded = false;
 let patternLoaded = false;
+let stream = null;
 
+// Estado de seleção da área (polígono)
+let isSelecting = false;
+let selectionPoints = []; // [{x,y}, ...]
+
+// --------- Padrões ----------
 const patterns = {
   none: null,
-  // Subway
   subway: `data:image/svg+xml;utf8,
     <svg xmlns='http://www.w3.org/2000/svg' width='40' height='20' viewBox='0 0 40 20'>
       <rect width='40' height='20' fill='white'/>
       <rect x='0' y='0' width='38' height='18' fill='none' stroke='black' stroke-width='2'/>
     </svg>`,
-  // Hex
   hex: `data:image/svg+xml;utf8,
     <svg xmlns='http://www.w3.org/2000/svg' width='34' height='30' viewBox='0 0 34 30'>
       <defs>
@@ -34,7 +48,7 @@ const patterns = {
   wood: `data:image/svg+xml;utf8,
     <svg xmlns='http://www.w3.org/2000/svg' width='120' height='60' viewBox='0 0 120 60'>
       <defs>
-        <linearGradient id='g' x1='0' y1='0' x2='0' y2='1'>
+        <linearGradient id='g' x1='0' y='0' x2='0' y2='1'>
           <stop offset='0%' stop-color='#8b5a2b'/>
           <stop offset='100%' stop-color='#5e3b1c'/>
         </linearGradient>
@@ -56,7 +70,7 @@ const patterns = {
       <path d='M20 0 C40 30, 60 10, 90 40'
             stroke='#e6e6ed' stroke-width='2' fill='none' opacity='.6'/>
     </svg>`,
-  // Cimento
+  // Cimento queimado
   concrete: `data:image/svg+xml;utf8,
     <svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'>
       <rect width='120' height='120' fill='#d2d2d2'/>
@@ -73,72 +87,168 @@ const patterns = {
     </svg>`
 };
 
-// Ajusta o canvas ao tamanho da foto
+// --------- Utilitários ----------
 function fitCanvasToImage(img) {
   const maxW = 1200;
   const ratio = img.width / img.height;
   const w = Math.min(maxW, img.width);
   const h = Math.round(w / ratio);
-  canvas.width = w;
-  canvas.height = h;
+  canvas.width = w; canvas.height = h;
 }
 
-// Desenha foto + padrão escolhido
+function getCanvasPos(evt) {
+  const rect = canvas.getBoundingClientRect();
+  // Suporta toque e mouse
+  const e = evt.touches && evt.touches[0] ? evt.touches[0] : evt;
+  return {
+    x: Math.round((e.clientX - rect.left) * (canvas.width / rect.width)),
+    y: Math.round((e.clientY - rect.top) * (canvas.height / rect.height))
+  };
+}
+
+function buildSelectionPath() {
+  if (selectionPoints.length < 2) return null;
+  const p = new Path2D();
+  p.moveTo(selectionPoints[0].x, selectionPoints[0].y);
+  for (let i = 1; i < selectionPoints.length; i++) {
+    p.lineTo(selectionPoints[i].x, selectionPoints[i].y);
+  }
+  // não fecha aqui; só ao concluir
+  return p;
+}
+
+function drawSelectionOverlay() {
+  if (!selectionPoints.length) return;
+  // linhas/ pontos de seleção em cima da imagem
+  ctx.save();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(96,165,250,0.9)'; // azul
+  ctx.fillStyle = 'rgba(96,165,250,0.25)';
+
+  // linhas entre os pontos
+  const path = buildSelectionPath();
+  if (path) ctx.stroke(path);
+
+  // pontos
+  for (const pt of selectionPoints) {
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, 5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+// --------- Desenho principal ----------
 function draw() {
   if (!baseLoaded) return;
+
+  // foto base
   ctx.globalCompositeOperation = 'source-over';
   ctx.globalAlpha = 1;
   ctx.drawImage(baseImg, 0, 0, canvas.width, canvas.height);
 
+  // pattern (com ou sem recorte)
   if (currentPattern !== 'none' && patternLoaded) {
-    const pattern = ctx.createPattern(patternImg, 'repeat');
-    if (pattern) {
-      ctx.save();
+    ctx.save();
+
+    // se já houver polígono fechado, use clip
+    if (selectionPoints.length >= 3 && !isSelecting) {
+      ctx.beginPath();
+      ctx.moveTo(selectionPoints[0].x, selectionPoints[0].y);
+      for (let i = 1; i < selectionPoints.length; i++) {
+        ctx.lineTo(selectionPoints[i].x, selectionPoints[i].y);
+      }
+      ctx.closePath();
+      ctx.clip(); // aplica o corte
+    }
+
+    // desenha o pattern
+    const pat = ctx.createPattern(patternImg, 'repeat');
+    if (pat) {
       ctx.globalAlpha = parseInt(intensityEl.value, 10) / 100;
       ctx.globalCompositeOperation = 'multiply';
-      ctx.fillStyle = pattern;
+      ctx.fillStyle = pat;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.restore();
     }
+
+    ctx.restore();
+  }
+
+  // se estiver selecionando (marcando pontos), mostra a sobreposição
+  if (isSelecting || selectionPoints.length) {
+    drawSelectionOverlay();
   }
 }
 
-// Abre câmera/galeria e carrega a foto automaticamente
+// --------- Uploads ---------
 shootBtn.addEventListener('click', () => fileInput.click());
 
 fileInput.addEventListener('change', (e) => {
-  const file = e.target.files && e.target.files[0];
+  const file = e.target.files?.[0];
   if (!file) return;
-
   const reader = new FileReader();
-  reader.onload = (ev) => {
+  reader.onload = (event) => {
     baseImg = new Image();
-    baseImg.onload = () => { baseLoaded = true; fitCanvasToImage(baseImg); draw(); };
-    baseImg.src = ev.target.result; // foto tirada/selecionada
+    baseImg.onload = () => { 
+      baseLoaded = true; 
+      fitCanvasToImage(baseImg); 
+      // limpamos seleção ao trocar a imagem
+      selectionPoints = [];
+      isSelecting = false;
+      updateSelectionUI();
+      draw(); 
+    };
+    baseImg.src = event.target.result;
   };
   reader.readAsDataURL(file);
 });
 
-// Ajuste de intensidade
+// --------- Câmera ---------
+async function startCamera() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false });
+    video.srcObject = stream;
+    cameraWrap.style.display = '';
+    captureBtn.style.display = '';
+    openCameraBtn.style.display = 'none';
+  } catch (err) {
+    alert('Não foi possível acessar a câmera. Use a galeria ou dê permissão ao navegador.');
+    console.error(err);
+  }
+}
+function stopCamera() {
+  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+  cameraWrap.style.display = 'none';
+  captureBtn.style.display = 'none';
+  openCameraBtn.style.display = '';
+}
+function capturePhoto() {
+  const vw = video.videoWidth, vh = video.videoHeight;
+  if (!vw || !vh) return;
+  const maxW = 1200, ratio = vw / vh, w = Math.min(maxW, vw), h = Math.round(w / ratio);
+  canvas.width = w; canvas.height = h;
+  ctx.drawImage(video, 0, 0, w, h);
+  baseImg = new Image();
+  baseImg.onload = () => { 
+    baseLoaded = true; 
+    // limpamos seleção ao trocar a imagem
+    selectionPoints = [];
+    isSelecting = false;
+    updateSelectionUI();
+    draw(); 
+  };
+  baseImg.src = canvas.toDataURL('image/png');
+  stopCamera();
+}
+openCameraBtn.addEventListener('click', startCamera);
+captureBtn.addEventListener('click', capturePhoto);
+
+// --------- Intensidade / Padrão ---------
 intensityEl.addEventListener('input', draw);
 
-// Troca de padrão
 patternButtons.forEach(btn => {
   btn.addEventListener('click', () => {
     currentPattern = btn.dataset.pattern;
     if (currentPattern === 'none') { draw(); return; }
-    patternImg = new Image();
-    patternLoaded = false;
-    patternImg.onload = () => { patternLoaded = true; draw(); };
-    patternImg.src = patterns[currentPattern];
-  });
-});
+    patternImg =
 
-// Baixar preview (PNG)
-downloadBtn.addEventListener('click', () => {
-  if (!baseLoaded) return;
-  const a = document.createElement('a');
-  a.href = canvas.toDataURL('image/png');
-  a.download = 'revesti-preview.png';
-  a.click();
-});
