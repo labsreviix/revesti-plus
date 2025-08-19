@@ -1,9 +1,11 @@
-// === Revesti+ MVP - script.js (com padrões extra + baixar preview) ===
+// === Revesti+ MVP — câmera/galeria + padrões + download ===
 const fileInput = document.getElementById('photoInput');
+const shootBtn = document.getElementById('shootBtn');
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const intensityEl = document.getElementById('intensity');
 const patternButtons = document.querySelectorAll('.patterns button');
+const downloadBtn = document.getElementById('downloadBtn');
 
 let baseImg = new Image();
 let patternImg = new Image();
@@ -13,14 +15,13 @@ let patternLoaded = false;
 
 const patterns = {
   none: null,
-
-  // Padrões SVG data-URI simples (leves e embutidos)
+  // Subway
   subway: `data:image/svg+xml;utf8,
     <svg xmlns='http://www.w3.org/2000/svg' width='40' height='20' viewBox='0 0 40 20'>
       <rect width='40' height='20' fill='white'/>
       <rect x='0' y='0' width='38' height='18' fill='none' stroke='black' stroke-width='2'/>
     </svg>`,
-
+  // Hex
   hex: `data:image/svg+xml;utf8,
     <svg xmlns='http://www.w3.org/2000/svg' width='34' height='30' viewBox='0 0 34 30'>
       <defs>
@@ -29,8 +30,6 @@ const patterns = {
       </defs>
       <use href='#h'/>
     </svg>`,
-
-  // --- Novos padrões ---
   // Madeira
   wood: `data:image/svg+xml;utf8,
     <svg xmlns='http://www.w3.org/2000/svg' width='120' height='60' viewBox='0 0 120 60'>
@@ -46,7 +45,6 @@ const patterns = {
       <path d='M15 20 q10 -6 20 0 M65 10 q15 -8 30 0 M95 40 q10 6 20 0'
             fill='none' stroke='#2b1c0f' stroke-width='1' opacity='.25'/>
     </svg>`,
-
   // Mármore
   marble: `data:image/svg+xml;utf8,
     <svg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'>
@@ -58,8 +56,7 @@ const patterns = {
       <path d='M20 0 C40 30, 60 10, 90 40'
             stroke='#e6e6ed' stroke-width='2' fill='none' opacity='.6'/>
     </svg>`,
-
-  // Cimento queimado
+  // Cimento
   concrete: `data:image/svg+xml;utf8,
     <svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'>
       <rect width='120' height='120' fill='#d2d2d2'/>
@@ -76,28 +73,28 @@ const patterns = {
     </svg>`
 };
 
+// Ajusta o canvas ao tamanho da foto
 function fitCanvasToImage(img) {
   const maxW = 1200;
   const ratio = img.width / img.height;
   const w = Math.min(maxW, img.width);
   const h = Math.round(w / ratio);
-  canvas.width = w; canvas.height = h;
+  canvas.width = w;
+  canvas.height = h;
 }
 
+// Desenha foto + padrão escolhido
 function draw() {
   if (!baseLoaded) return;
-
-  // foto base
   ctx.globalCompositeOperation = 'source-over';
   ctx.globalAlpha = 1;
   ctx.drawImage(baseImg, 0, 0, canvas.width, canvas.height);
 
-  // pattern
   if (currentPattern !== 'none' && patternLoaded) {
     const pattern = ctx.createPattern(patternImg, 'repeat');
     if (pattern) {
       ctx.save();
-      ctx.globalAlpha = parseInt(intensityEl.value, 10) / 100; // 0–1
+      ctx.globalAlpha = parseInt(intensityEl.value, 10) / 100;
       ctx.globalCompositeOperation = 'multiply';
       ctx.fillStyle = pattern;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -106,20 +103,26 @@ function draw() {
   }
 }
 
-// upload da foto
+// Abre câmera/galeria e carrega a foto automaticamente
+shootBtn.addEventListener('click', () => fileInput.click());
+
 fileInput.addEventListener('change', (e) => {
-  const file = e.target.files?.[0];
+  const file = e.target.files && e.target.files[0];
   if (!file) return;
-  const url = URL.createObjectURL(file);
-  baseImg = new Image();
-  baseImg.onload = () => { baseLoaded = true; fitCanvasToImage(baseImg); draw(); };
-  baseImg.src = url;
+
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    baseImg = new Image();
+    baseImg.onload = () => { baseLoaded = true; fitCanvasToImage(baseImg); draw(); };
+    baseImg.src = ev.target.result; // foto tirada/selecionada
+  };
+  reader.readAsDataURL(file);
 });
 
-// intensidade
+// Ajuste de intensidade
 intensityEl.addEventListener('input', draw);
 
-// troca de padrão
+// Troca de padrão
 patternButtons.forEach(btn => {
   btn.addEventListener('click', () => {
     currentPattern = btn.dataset.pattern;
@@ -131,12 +134,7 @@ patternButtons.forEach(btn => {
   });
 });
 
-// botão: Baixar preview (PNG)
-const downloadBtn = document.createElement('button');
-downloadBtn.textContent = 'Baixar Preview';
-downloadBtn.style.marginLeft = '8px';
-document.querySelector('.controls').appendChild(downloadBtn);
-
+// Baixar preview (PNG)
 downloadBtn.addEventListener('click', () => {
   if (!baseLoaded) return;
   const a = document.createElement('a');
