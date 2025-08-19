@@ -5,21 +5,39 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Revesti+ (MVP)</title>
   <link rel="stylesheet" href="style.css" />
+  <style>
+    /* Extra leve pro modo seleção */
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .camera-wrap { margin: 10px 0; }
+    #video { width: 100%; max-height: 60vh; border-radius: 12px; border: 1px solid #1f2937; }
+    .hint { opacity: .7; font-size: 12px; }
+    .controls button, .controls label.upload {
+      background: #111827; border: 1px solid #1f2937; color: #e5e7eb;
+      padding: 10px 14px; border-radius: 10px; cursor: pointer;
+    }
+    .controls button:hover { border-color: #60a5fa; }
+    .canvas-wrap { background: #0f172a; border: 1px solid #1f2937; border-radius: 14px; padding: 8px; }
+    canvas { width: 100%; height: auto; display: block; background: #111; touch-action: none; }
+  </style>
 </head>
 <body>
   <header>
     <h1>Revesti+ • MVP</h1>
-    <p>Tire uma foto do ambiente e experimente padrões de revestimento.</p>
+    <p>Tire uma foto ou escolha da galeria e teste padrões de revestimento.</p>
   </header>
 
   <main>
     <section class="controls">
-      <!-- Botão grande: abre a CÂMERA no celular (ou galeria/arquivos no PC) -->
-      <label class="upload" id="shootBtn">Tirar foto agora</label>
-      <!-- Input real fica escondido; o JS clica nele -->
-      <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" />
+      <div class="row">
+        <!-- Galeria / Câmera -->
+        <label class="upload" id="shootBtn">Tirar foto agora</label>
+        <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" />
+        <button id="openCameraBtn">Abrir câmera</button>
+        <button id="captureBtn" style="display:none">Capturar</button>
+        <span class="hint">ou escolha da galeria ao tocar em “Tirar foto agora”</span>
+      </div>
 
-      <div class="patterns">
+      <div class="row patterns">
         <button data-pattern="none">Sem padrão</button>
         <button data-pattern="subway">Subway</button>
         <button data-pattern="hex">Hexágonos</button>
@@ -28,26 +46,34 @@
         <button data-pattern="concrete">Cimento</button>
       </div>
 
-      <div class="blends">
+      <div class="row">
         <label>Intensidade
           <input type="range" id="intensity" min="0" max="100" value="65" />
         </label>
+        <button id="selectAreaBtn">Selecionar parede</button>
+        <button id="finishSelectionBtn" style="display:none">Concluir seleção</button>
+        <button id="clearSelectionBtn" style="display:none">Limpar seleção</button>
+        <button id="downloadBtn">Baixar Preview</button>
+      </div>
+      <div class="hint" id="selectionHint" style="display:none">
+        Toque/click para marcar pontos do contorno (mín. 3). Dê toques para contornar e clique em “Concluir seleção”.
       </div>
     </section>
 
-    <!-- A foto + efeito é desenhada aqui. O usuário não precisa “ir ao canvas”,
-         ele só vê o resultado como uma imagem. -->
+    <!-- Preview da câmera (aparece só quando abrir a câmera) -->
+    <section class="camera-wrap" style="display:none">
+      <video id="video" autoplay playsinline></video>
+    </section>
+
     <section class="canvas-wrap">
       <canvas id="canvas"></canvas>
     </section>
   </main>
 
   <footer>
-    <button id="downloadBtn">Baixar Preview</button>
-    <small style="display:block;margin-top:8px;opacity:.7">MVP demo • Revesti+</small>
+    <small>MVP demo • Revesti+</small>
   </footer>
 
   <script src="script.js"></script>
 </body>
 </html>
-
