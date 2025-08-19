@@ -1,0 +1,10 @@
+# Node/Vite (caso futuro)
+node_modules/
+dist/
+
+# Mac/OSX
+.DS_Store
+
+# Replit
+.replit
+.nix
