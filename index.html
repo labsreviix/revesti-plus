@@ -1,79 +1,26 @@
-<!doctype html>
-<html lang="pt-br">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Revesti+ (MVP)</title>
-  <link rel="stylesheet" href="style.css" />
-  <style>
-    /* Extra leve pro modo seleção */
-    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-    .camera-wrap { margin: 10px 0; }
-    #video { width: 100%; max-height: 60vh; border-radius: 12px; border: 1px solid #1f2937; }
-    .hint { opacity: .7; font-size: 12px; }
-    .controls button, .controls label.upload {
-      background: #111827; border: 1px solid #1f2937; color: #e5e7eb;
-      padding: 10px 14px; border-radius: 10px; cursor: pointer;
-    }
-    .controls button:hover { border-color: #60a5fa; }
-    .canvas-wrap { background: #0f172a; border: 1px solid #1f2937; border-radius: 14px; padding: 8px; }
-    canvas { width: 100%; height: auto; display: block; background: #111; touch-action: none; }
-  </style>
-</head>
-<body>
-  <header>
-    <h1>Revesti+ • MVP</h1>
-    <p>Tire uma foto ou escolha da galeria e teste padrões de revestimento.</p>
-  </header>
+<div class="row">
+  <label>Intensidade
+    <input type="range" id="intensity" min="0" max="100" value="65" />
+  </label>
 
-  <main>
-    <section class="controls">
-      <div class="row">
-        <!-- Galeria / Câmera -->
-        <label class="upload" id="shootBtn">Tirar foto agora</label>
-        <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none" />
-        <button id="openCameraBtn">Abrir câmera</button>
-        <button id="captureBtn" style="display:none">Capturar</button>
-        <span class="hint">ou escolha da galeria ao tocar em “Tirar foto agora”</span>
-      </div>
+  <!-- Seleção -->
+  <button id="selectAreaBtn">Selecionar parede</button>
+  <button id="finishSelectionBtn" style="display:none">Concluir seleção</button>
+  <button id="clearSelectionBtn" style="display:none">Limpar</button>
 
-      <div class="row patterns">
-        <button data-pattern="none">Sem padrão</button>
-        <button data-pattern="subway">Subway</button>
-        <button data-pattern="hex">Hexágonos</button>
-        <button data-pattern="wood">Madeira</button>
-        <button data-pattern="marble">Mármore</button>
-        <button data-pattern="concrete">Cimento</button>
-      </div>
+  <!-- Edição -->
+  <button id="editModeBtn" style="display:none">Editar pontos</button>
+  <button id="undoPointBtn" style="display:none">Desfazer ponto</button>
+  <button id="saveMaskBtn" style="display:none">Salvar seleção</button>
+  <button id="loadMaskBtn" style="display:none">Carregar seleção</button>
 
-      <div class="row">
-        <label>Intensidade
-          <input type="range" id="intensity" min="0" max="100" value="65" />
-        </label>
-        <button id="selectAreaBtn">Selecionar parede</button>
-        <button id="finishSelectionBtn" style="display:none">Concluir seleção</button>
-        <button id="clearSelectionBtn" style="display:none">Limpar seleção</button>
-        <button id="downloadBtn">Baixar Preview</button>
-      </div>
-      <div class="hint" id="selectionHint" style="display:none">
-        Toque/click para marcar pontos do contorno (mín. 3). Dê toques para contornar e clique em “Concluir seleção”.
-      </div>
-    </section>
+  <!-- Download -->
+  <button id="downloadBtn">Baixar Preview</button>
+</div>
 
-    <!-- Preview da câmera (aparece só quando abrir a câmera) -->
-    <section class="camera-wrap" style="display:none">
-      <video id="video" autoplay playsinline></video>
-    </section>
-
-    <section class="canvas-wrap">
-      <canvas id="canvas"></canvas>
-    </section>
-  </main>
-
-  <footer>
-    <small>MVP demo • Revesti+</small>
-  </footer>
-
-  <script src="script.js"></script>
-</body>
-</html>
+<div class="hint" id="selectionHint" style="display:none">
+  Modo seleção: toque para adicionar pontos (mín. 3) e “Concluir seleção”.
+</div>
+<div class="hint" id="editHint" style="display:none">
+  Modo edição: arraste os pontos para ajustar. Toque duplo (ou toque longo) em um ponto para removê-lo.
+</div>
