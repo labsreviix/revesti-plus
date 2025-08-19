@@ -1,28 +1,219 @@
-:root {
-  --bg: #0b0e14;
-  --card: #111827;
-  --fg: #e5e7eb;
-  --accent: #60a5fa;
+/* ===========================
+   Revesti+ — Estilos Globais
+   =========================== */
+
+:root{
+  --bg: #0b0e14;         /* fundo geral */
+  --panel: #0f172a;      /* painel/canvas */
+  --card: #111827;       /* cards/botoes */
+  --border: #1f2937;     /* bordas */
+  --fg: #e5e7eb;         /* texto */
+  --muted: #9aa4b2;      /* texto secundário */
+  --accent: #60a5fa;     /* azul */
+  --accent-strong:#3b82f6;
+  --danger:#ef4444;      /* remover/erro */
+  --ok:#10b981;          /* ok/sucesso */
+  --shadow: 0 10px 30px rgba(0,0,0,.25);
 }
-* { box-sizing: border-box; }
-html, body { height: 100%; }
-body {
-  margin: 0; background: var(--bg); color: var(--fg);
+
+*{ box-sizing: border-box; }
+html, body{ height: 100%; }
+html{ scroll-behavior: smooth; }
+body{
+  margin: 0;
   font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  background: radial-gradient(1000px 600px at 10% -10%, #111a2b 0%, var(--bg) 55%);
+  color: var(--fg);
 }
-header { padding: 24px; text-align: center; }
-h1 { margin: 0 0 8px; font-size: 28px; }
-main { max-width: 980px; margin: 0 auto; padding: 16px; }
-.controls {
-  display: grid; gap: 16px; grid-template-columns: 1fr; margin-bottom: 16px;
+
+/* ===========================
+   Cabeçalho
+   =========================== */
+header{
+  padding: 28px 18px 8px;
+  text-align: center;
 }
-.upload input { display: none; }
-.upload { background: var(--card); padding: 12px 16px; border-radius: 12px; cursor: pointer; display: inline-block; }
-.patterns, .blends { display: flex; gap: 8px; flex-wrap: wrap; }
-button { background: var(--card); border: 1px solid #1f2937; color: var(--fg); padding: 10px 14px; border-radius: 10px; cursor: pointer; }
-button:hover { border-color: var(--accent); }
-.canvas-wrap {
-  background: #0f172a; border: 1px solid #1f2937; border-radius: 14px; padding: 8px;
+h1{
+  margin: 0 0 6px;
+  font-size: clamp(22px, 3vw, 32px);
+  letter-spacing: .3px;
 }
-canvas { width: 100%; height: auto; display: block; background: #111; }
-footer { text-align: center; padding: 16px; opacity: .7; }
+header p{
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* ===========================
+   Layout Principal
+   =========================== */
+main{
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+/* Bloco de controles */
+.controls{
+  display: grid;
+  gap: 14px;
+  grid-template-columns: 1fr;
+  margin: 10px 0 16px;
+}
+
+/* Linhas flexíveis de botões e inputs */
+.row{
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* ===========================
+   Botões / Labels clicáveis
+   =========================== */
+button, .controls label.upload{
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--fg);
+  padding: 10px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: border-color .2s ease, transform .08s ease;
+  box-shadow: 0 1px 0 rgba(255,255,255,.02) inset;
+}
+.controls label.upload input{ display:none; }
+
+button:hover, .controls label.upload:hover{
+  border-color: var(--accent);
+}
+button:active, .controls label.upload:active{
+  transform: translateY(1px);
+}
+button:disabled{
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+/* Estados de foco acessíveis */
+button:focus-visible, .controls label.upload:focus-visible, input[type="range"]:focus-visible{
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Botões especiais */
+#finishSelectionBtn{ border-color: var(--ok); }
+#clearSelectionBtn{ border-color: var(--danger); }
+#downloadBtn{ border-color: var(--accent-strong); }
+
+/* Garantir que textos dos botões não quebrem feio */
+.row button{ white-space: nowrap; }
+
+/* ===========================
+   Padrões (grid em telas largas)
+   =========================== */
+.patterns{
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(2, minmax(120px, 1fr));
+}
+@media (min-width: 720px){
+  .patterns{
+    grid-template-columns: repeat(5, minmax(120px, 1fr));
+  }
+}
+
+/* ===========================
+   Sliders / Inputs
+   =========================== */
+label{ color: var(--muted); font-size: 14px; }
+input[type="range"]{
+  appearance: none;
+  height: 6px;
+  background: #0e1524;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  width: 200px;
+}
+input[type="range"]::-webkit-slider-thumb{
+  appearance: none;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: var(--shadow);
+  border: none;
+  margin-top: -5px;
+}
+input[type="range"]::-moz-range-thumb{
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--accent); border: none;
+}
+
+/* ===========================
+   Câmera
+   =========================== */
+.camera-wrap{
+  display: none; /* habilitada via JS */
+  margin: 10px 0;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  background: var(--panel);
+}
+#video{
+  width: 100%;
+  max-height: 60vh;
+  display: block;
+}
+
+/* ===========================
+   Canvas / Preview
+   =========================== */
+.canvas-wrap{
+  position: relative;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 8px;
+  box-shadow: var(--shadow);
+}
+canvas{
+  width: 100%;
+  height: auto;
+  display: block;
+  background: #101522;
+  border-radius: 10px;
+  touch-action: none; /* melhor comportamento no mobile */
+}
+
+/* Dicas de uso (seleção/edição) */
+.hint{
+  margin-top: 4px;
+  padding: 8px 10px;
+  font-size: 12px;
+  color: var(--fg);
+  background: rgba(0,0,0,.45);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+/* ===========================
+   Rodapé
+   =========================== */
+footer{
+  text-align: center;
+  padding: 18px 12px 32px;
+  opacity: .7;
+  font-size: 12px;
+}
+
+/* ===========================
+   Responsividade extra
+   =========================== */
+@media (max-width: 420px){
+  input[type="range"]{ width: 150px; }
+}
+@media (min-width: 1100px){
+  main{ max-width: 1140px; }
+}
